@@ -4,6 +4,23 @@ $(function() {
 
         self.automaticShutdownEnabled = ko.observable(false);
 
+        self.timeoutPopupText = gettext('Shutting down in ');
+        self.timeoutPopupOptions = {
+            title: gettext('System Shutdown'),
+            icon: 'glyphicon glyphicon-question-sign',
+            hide: false,
+            confirm: {
+                confirm: true
+            },
+            buttons: {
+                closer: false,
+                sticker: false
+            },
+            history: {
+                history: false
+            }
+        }
+
         self.onAutomaticShutdownEvent = function() {
             $.ajax({
                 url: "api/plugin/automaticshutdown",
@@ -25,22 +42,8 @@ $(function() {
             }
             if (data.type == "timeout") {
                 self.shutdownTimeout = data.timeout;
-                self.timeoutPopup = new PNotify({
-                    title: 'System Shutdown',
-                    text: 'Shutting down in ' + self.shutdownTimeout + '...',
-                    icon: 'glyphicon glyphicon-question-sign',
-                    hide: false,
-                    confirm: {
-                        confirm: true
-                    },
-                    buttons: {
-                        closer: false,
-                        sticker: false
-                    },
-                    history: {
-                        history: false
-                    }
-                })
+                self.timeoutPopupOptions.text = self.timeoutPopupText + data.timeout;
+                self.timeoutPopup = new PNotify(self.timeoutPopupOptions);
                 self.timeoutPopup.get().on('pnotify.confirm', function() {self.confirmShutdown(true);});
                 self.timeoutPopup.get().on('pnotify.cancel', function() {self.confirmShutdown(false);});
                 self.timerInterval = window.setInterval(self.shutdownTimer, 1000);
@@ -50,22 +53,8 @@ $(function() {
         self.shutdownTimer = function() {
             self.shutdownTimeout -= 1;
             if (self.shutdownTimeout > 0) {
-                self.timeoutPopup.update({
-                    title: 'System Shutdown',
-                    text: 'Shutting down in ' + self.shutdownTimeout + '...',
-                    icon: 'glyphicon glyphicon-question-sign',
-                    hide: false,
-                    confirm: {
-                        confirm: true
-                    },
-                    buttons: {
-                        closer: false,
-                        sticker: false
-                    },
-                    history: {
-                        history: false
-                    }
-                });
+                self.timeoutPopupOptions.text = self.timeoutPopupText + self.shutdownTimeout;
+                self.timeoutPopup.update(self.timeoutPopupOptions);
             } else {
                 self.confirmShutdown(true);
             }
