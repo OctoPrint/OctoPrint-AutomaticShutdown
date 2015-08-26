@@ -1,6 +1,10 @@
-# OctoPrint-AutomaticShutdown
+# OctoPrint Automatic Shutdown
 
-**TODO:** Describe what your plugin does.
+This OctoPrint plugin enables the system to be automatically shut down after a print is finished.
+
+The user can enable automatic shutdown for each print by using a checkbox in the sidebar.
+
+![Sidebar](http://i.imgur.com/e79FxXv.png)
 
 ## Setup
 
@@ -9,9 +13,8 @@ or manually using this URL:
 
     https://github.com/OctoPrint/OctoPrint-AutomaticShutdown/archive/master.zip
 
-**TODO:** Describe how to install your plugin, if more needs to be done than just installing it via pip or through
-the plugin manager.
-
 ## Configuration
 
-**TODO:** Describe your plugin's configuration options (if any).
+In order for the plugin work, the systemShutdownCommand must be set within the settings.
+
+This setting can be edited in OctoPrint "Settings/Server/Shutdown system".
