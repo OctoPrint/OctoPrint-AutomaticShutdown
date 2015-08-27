@@ -19,23 +19,22 @@ class AutomaticshutdownPlugin(octoprint.plugin.TemplatePlugin,
 	def get_template_configs(self):
 		return [dict(type="sidebar",
 					name="Automatic Shutdown",
-					custom_bindings=True,
+					custom_bindings=False,
 					icon="power-off")]
 
 	def get_api_commands(self):
 		return dict(automatic_shutdown=["value"],
-					confirm_shutdown=["value"])
+					abort_shutdown=["value"])
 
 	def on_api_command(self, command, data):
 		import flask
 		if command == "automatic_shutdown":
 			self.automatic_shutdown_enabled = data["value"]
-		elif command == "confirm_shutdown":
+		elif command == "abort_shutdown":
 			if data["value"]:
-				self._shutdown_system()
-			else:
 				self._logger.info("Shutdown aborted.")
-				return
+			else:
+				self._shutdown_system()
 
 	def on_event(self, event, payload):
 		if event == "PrintDone":
