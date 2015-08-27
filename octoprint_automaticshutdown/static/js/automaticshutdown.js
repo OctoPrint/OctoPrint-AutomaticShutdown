@@ -45,7 +45,7 @@ $(function() {
 
         self.onAutomaticShutdownEvent = function() {
             $.ajax({
-                url: "api/plugin/automaticshutdown",
+                url: API_BASEURL + "/plugin/automaticshutdown",
                 type: "POST",
                 dataType: "json",
                 data: JSON.stringify({
@@ -82,7 +82,7 @@ $(function() {
             self.timeoutPopup.remove();
             self.timeoutPopup = undefined;
             $.ajax({
-                url: "api/plugin/automaticshutdown",
+                url: API_BASEURL + "/plugin/automaticshutdown",
                 type: "POST",
                 dataType: "json",
                 data: JSON.stringify({
