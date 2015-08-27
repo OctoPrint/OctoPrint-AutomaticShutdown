@@ -9,7 +9,8 @@ $(function() {
         self.timeoutPopupText = gettext('Shutting down in ');
         self.timeoutPopupOptions = {
             title: gettext('System Shutdown'),
-            icon: 'glyphicon glyphicon-question-sign',
+            type: 'notice',
+            icon: true,
             hide: false,
             confirm: {
                 confirm: true,
@@ -31,6 +32,10 @@ $(function() {
                 history: false
             }
         };
+
+        self.onDataUpdaterReconnect = function() {
+            self.automaticShutdownEnabled(false);
+        }
 
         self.onAutomaticShutdownEvent = function() {
             $.ajax({
