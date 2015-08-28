@@ -3,6 +3,7 @@ from __future__ import absolute_import
 
 import octoprint.plugin
 from octoprint.util import RepeatedTimer
+from octoprint.events import Events
 
 class AutomaticshutdownPlugin(octoprint.plugin.TemplatePlugin,
 							  octoprint.plugin.AssetPlugin,
@@ -11,47 +12,54 @@ class AutomaticshutdownPlugin(octoprint.plugin.TemplatePlugin,
 							  octoprint.plugin.SettingsPlugin,
 							  octoprint.plugin.StartupPlugin):
 
-	def on_after_startup(self):
-		self.automatic_shutdown_enabled = False
+	def __init__(self):
+		self._automatic_shutdown_enabled = False
+		self._timeout_value = None
+		self._timer = None
 
 	def get_assets(self):
 		return dict(js=["js/automaticshutdown.js"])
 
 	def get_template_configs(self):
 		return [dict(type="sidebar",
-					name="Automatic Shutdown",
-					custom_bindings=False,
-					icon="power-off")]
+			name="Automatic Shutdown",
+			custom_bindings=False,
+			icon="power-off")]
 
 	def get_api_commands(self):
 		return dict(enable=[],
-					disable=[],
-					abort=[])
+			disable=[],
+			abort=[])
 
 	def on_api_command(self, command, data):
 		import flask
 		if command == "enable":
-			self.automatic_shutdown_enabled = True
+			self._automatic_shutdown_enabled = True
 		elif command == "disable":
-			self.automatic_shutdown_enabled = False
+			self._automatic_shutdown_enabled = False
 		elif command == "abort":
-			self._timer.finish()
+			self._timer.cancel()
 			self._logger.info("Shutdown aborted.")
 
 	def on_event(self, event, payload):
-		if event == "PrintDone":
-			if self.automatic_shutdown_enabled and self._settings.global_get(["server", "commands", "systemShutdownCommand"]) and not hasattr(self, "timer"):
-				self.timeout_value = 10
-				self._timer = RepeatedTimer(1, self._timer_task)
-				self._timer.start()
-				self._plugin_manager.send_plugin_message(self._identifier, dict(type="timeout", timeout_value=self.timeout_value))
+		if event != Events.PRINT_DONE:
+			return
+		if not self._automatic_shutdown_enabled or not self._settings.global_get(["server", "commands", "systemShutdownCommand"]):
+			return
+		if self._timer is not None:
+			return
+
+		self._timeout_value = 10
+		self._timer = RepeatedTimer(1, self._timer_task)
+		self._timer.start()
+		self._plugin_manager.send_plugin_message(self._identifier, dict(type="timeout", timeout_value=self._timeout_value))
 
 	def _timer_task(self):
-		self.timeout_value -= 1
-		self._plugin_manager.send_plugin_message(self._identifier, dict(type="timeout", timeout_value=self.timeout_value))
-		if self.timeout_value <= 0:
-			self._timer.finish()
-			del(self._timer)
+		self._timeout_value -= 1
+		self._plugin_manager.send_plugin_message(self._identifier, dict(type="timeout", timeout_value=self._timeout_value))
+		if self._timeout_value <= 0:
+			self._timer.cancel()
+			self._timer = None
 			self._shutdown_system()
 
 	def _shutdown_system(self):
