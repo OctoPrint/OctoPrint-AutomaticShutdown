@@ -18,7 +18,7 @@ plugin_version = "0.1.0"
 
 # The plugin's description. Can be overwritten within OctoPrint's internal data via __plugin_description__ in the plugin
 # module
-plugin_description = "This plugin enables the system to be automatically shut down after a print is finished by checking a checkbox in the sidebar"
+plugin_description = "Enables the system to be automatically shut down after a print is finished"
 
 # The plugin's author. Can be overwritten within OctoPrint's internal data via __plugin_author__ in the plugin module
 plugin_author = "Nicanor Romero Venier"
