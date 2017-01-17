@@ -1,3 +1,11 @@
+----
+
+**Looking for a new maintainer!**
+
+Please [get in touch](https://github.com/OctoPrint/OctoPrint-AutomaticShutdown/issues/7) if you want to take over maintenance of this plugin.
+
+----
+
 # OctoPrint Automatic Shutdown
 
 This OctoPrint plugin enables the system to be automatically shut down after a print is finished.
