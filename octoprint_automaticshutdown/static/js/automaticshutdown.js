@@ -2,7 +2,7 @@ $(function() {
     function AutomaticShutdownViewModel(parameters) {
         var self = this;
 
-        self.automaticShutdownEnabled = ko.observable(false);
+        self.automaticShutdownEnabled = ko.observable();
 
         // Hack to remove automatically added Cancel button
         // See https://github.com/sciactive/pnotify/issues/141
@@ -34,6 +34,7 @@ $(function() {
             }
         };
 
+/*
         self.onDataUpdaterReconnect = function() {
             self.automaticShutdownEnabled(false);
         }
@@ -42,7 +43,7 @@ $(function() {
             self.automaticShutdownEnabled(false);
             self.onAutomaticShutdownEvent();
         }
-
+*/
         self.onAutomaticShutdownEvent = function() {
             if (self.automaticShutdownEnabled()) {
                 $.ajax({
@@ -87,6 +88,7 @@ $(function() {
                     self.timeoutPopup = undefined;
                 }
             }
+            self.automaticShutdownEnabled(data.automaticShutdownEnabled);
         }
 
         self.abortShutdown = function(abortShutdownValue) {
