@@ -34,16 +34,6 @@ $(function() {
             }
         };
 
-/*
-        self.onDataUpdaterReconnect = function() {
-            self.automaticShutdownEnabled(false);
-        }
-
-        self.onStartupComplete = function() {
-            self.automaticShutdownEnabled(false);
-            self.onAutomaticShutdownEvent();
-        }
-*/
         self.onAutomaticShutdownEvent = function() {
             if (self.automaticShutdownEnabled()) {
                 $.ajax({
