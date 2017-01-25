@@ -64,21 +64,25 @@ $(function() {
             if (plugin != "automaticshutdown") {
                 return;
             }
+
+            self.automaticShutdownEnabled(data.automaticShutdownEnabled);
+
             if (data.type == "timeout") {
-                if (data.timeout_value > 0) {
+                if ((data.timeout_value != null) && (data.timeout_value > 0)) {
                     self.timeoutPopupOptions.text = self.timeoutPopupText + data.timeout_value;
-                    if (self.timeoutPopup !== undefined) {
+                    if (typeof self.timeoutPopup != "undefined") {
                         self.timeoutPopup.update(self.timeoutPopupOptions);
                     } else {
                         self.timeoutPopup = new PNotify(self.timeoutPopupOptions);
                         self.timeoutPopup.get().on('pnotify.cancel', function() {self.abortShutdown(true);});
                     }
                 } else {
-                    self.timeoutPopup.remove();
-                    self.timeoutPopup = undefined;
+                    if (typeof self.timeoutPopup != "undefined") {
+                        self.timeoutPopup.remove();
+                        self.timeoutPopup = undefined;
+                    }
                 }
             }
-            self.automaticShutdownEnabled(data.automaticShutdownEnabled);
         }
 
         self.abortShutdown = function(abortShutdownValue) {
