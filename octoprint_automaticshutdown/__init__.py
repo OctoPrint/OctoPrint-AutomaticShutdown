@@ -38,25 +38,36 @@ class AutomaticshutdownPlugin(octoprint.plugin.TemplatePlugin,
 		elif command == "disable":
 			self._automatic_shutdown_enabled = False
 		elif command == "abort":
-			self._timer.cancel()
+			if self._timer is not None:
+				self._timer.cancel()
+				self._timer = None
+			self._timeout_value = None
 			self._logger.info("Shutdown aborted.")
+                
+                self._plugin_manager.send_plugin_message(self._identifier, dict(automaticShutdownEnabled=self._automatic_shutdown_enabled, type="timeout", timeout_value=self._timeout_value))
 
 	def on_event(self, event, payload):
-		if event != Events.PRINT_DONE:
+		if event == Events.CLIENT_OPENED:
+			self._plugin_manager.send_plugin_message(self._identifier, dict(automaticShutdownEnabled=self._automatic_shutdown_enabled, type="timeout", timeout_value=self._timeout_value))
+                        return
+		
+                if event != Events.PRINT_DONE:
 			return
 		if not self._automatic_shutdown_enabled or not self._settings.global_get(["server", "commands", "systemShutdownCommand"]):
 			return
 		if self._timer is not None:
 			return
-
+		
 		self._timeout_value = 10
 		self._timer = RepeatedTimer(1, self._timer_task)
 		self._timer.start()
-		self._plugin_manager.send_plugin_message(self._identifier, dict(type="timeout", timeout_value=self._timeout_value))
 
 	def _timer_task(self):
+		if self._timeout_value is None:
+			return
+
 		self._timeout_value -= 1
-		self._plugin_manager.send_plugin_message(self._identifier, dict(type="timeout", timeout_value=self._timeout_value))
+		self._plugin_manager.send_plugin_message(self._identifier, dict(automaticShutdownEnabled=self._automatic_shutdown_enabled, type="timeout", timeout_value=self._timeout_value))
 		if self._timeout_value <= 0:
 			self._timer.cancel()
 			self._timer = None

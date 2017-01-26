@@ -2,7 +2,7 @@ $(function() {
     function AutomaticShutdownViewModel(parameters) {
         var self = this;
 
-        self.automaticShutdownEnabled = ko.observable(false);
+        self.automaticShutdownEnabled = ko.observable();
 
         // Hack to remove automatically added Cancel button
         // See https://github.com/sciactive/pnotify/issues/141
@@ -34,15 +34,6 @@ $(function() {
             }
         };
 
-        self.onDataUpdaterReconnect = function() {
-            self.automaticShutdownEnabled(false);
-        }
-
-        self.onStartupComplete = function() {
-            self.automaticShutdownEnabled(false);
-            self.onAutomaticShutdownEvent();
-        }
-
         self.onAutomaticShutdownEvent = function() {
             if (self.automaticShutdownEnabled()) {
                 $.ajax({
@@ -73,18 +64,23 @@ $(function() {
             if (plugin != "automaticshutdown") {
                 return;
             }
+
+            self.automaticShutdownEnabled(data.automaticShutdownEnabled);
+
             if (data.type == "timeout") {
-                if (data.timeout_value > 0) {
+                if ((data.timeout_value != null) && (data.timeout_value > 0)) {
                     self.timeoutPopupOptions.text = self.timeoutPopupText + data.timeout_value;
-                    if (self.timeoutPopup !== undefined) {
+                    if (typeof self.timeoutPopup != "undefined") {
                         self.timeoutPopup.update(self.timeoutPopupOptions);
                     } else {
                         self.timeoutPopup = new PNotify(self.timeoutPopupOptions);
                         self.timeoutPopup.get().on('pnotify.cancel', function() {self.abortShutdown(true);});
                     }
                 } else {
-                    self.timeoutPopup.remove();
-                    self.timeoutPopup = undefined;
+                    if (typeof self.timeoutPopup != "undefined") {
+                        self.timeoutPopup.remove();
+                        self.timeoutPopup = undefined;
+                    }
                 }
             }
         }
