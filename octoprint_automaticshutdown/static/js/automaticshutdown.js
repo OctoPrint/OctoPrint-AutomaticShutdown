@@ -2,6 +2,7 @@ $(function() {
     function AutomaticShutdownViewModel(parameters) {
         var self = this;
 
+        self.loginState = parameters[0];
         self.automaticShutdownEnabled = ko.observable();
 
         // Hack to remove automatically added Cancel button
@@ -102,7 +103,7 @@ $(function() {
 
     OCTOPRINT_VIEWMODELS.push([
         AutomaticShutdownViewModel,
-        [],
+        ["loginStateViewModel"],
         document.getElementById("sidebar_plugin_automaticshutdown")
     ]);
 });

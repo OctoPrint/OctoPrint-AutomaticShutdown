@@ -1,0 +1,20 @@
+<form class="form-horizontal">
+
+    <h4>General</h4>
+    <div class="control-group">
+        <label class="control-label">Abort Timeout</label>
+        <div class="controls">
+            <div class="input-append">
+                <input type="number" class="input-mini text-right" data-bind="value: settings.plugins.automaticshutdown.abortTimeout">
+                <span class="add-on">sec</span>
+            </div>
+        </div>
+    </div>
+    <div class="control-group">
+        <div class="controls">
+            <label class="checkbox">
+            <input type="checkbox" data-bind="checked: settings.plugins.automaticshutdown.rememberCheckBox"> Remember the value of "Shutdown after print finishes"
+            </label>
+        </div>
+    </div>
+</form>
