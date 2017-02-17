@@ -5,6 +5,7 @@ import octoprint.plugin
 from octoprint.server import user_permission
 from octoprint.util import RepeatedTimer
 from octoprint.events import eventManager, Events
+from flask import make_response
 import time
 
 class AutomaticshutdownPlugin(octoprint.plugin.TemplatePlugin,
