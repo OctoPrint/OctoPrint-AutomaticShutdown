@@ -5,6 +5,7 @@ import octoprint.plugin
 from octoprint.server import user_permission
 from octoprint.util import RepeatedTimer
 from octoprint.events import eventManager, Events
+import octoprint.timelapse
 from flask import make_response
 import time
 
@@ -19,10 +20,10 @@ class AutomaticshutdownPlugin(octoprint.plugin.TemplatePlugin,
                 self.abortTimeout = 0
                 self.rememberCheckBox = False
                 self.lastCheckBoxValue = False
-		self._automatic_shutdown_enabled = False
-		self._timeout_value = None
-		self._timer = None
-                self._renderingQueue = []
+                self._automatic_shutdown_enabled = False
+                self._timeout_value = None
+		self._abort_timer = None
+		self._wait_for_timelapse_timer = None
 
         def initialize(self):
                 self.abortTimeout = self._settings.get_int(["abortTimeout"])
@@ -56,16 +57,19 @@ class AutomaticshutdownPlugin(octoprint.plugin.TemplatePlugin,
                 if not user_permission.can():
                         return make_response("Insufficient rights", 403)
 
-		if command == "enable":
-			self._automatic_shutdown_enabled = True
-		elif command == "disable":
-			self._automatic_shutdown_enabled = False
-		elif command == "abort":
-			if self._timer is not None:
-				self._timer.cancel()
-				self._timer = None
-			self._timeout_value = None
-			self._logger.info("Shutdown aborted.")
+                if command == "enable":
+                        self._automatic_shutdown_enabled = True
+                elif command == "disable":
+                        self._automatic_shutdown_enabled = False
+                elif command == "abort":
+                        if self._wait_for_timelapse_timer is not None:
+                                self._wait_for_timelapse_timer.cancel()
+                                self._wait_for_timelapse_timer = None
+                        if self._abort_timer is not None:
+                                self._abort_timer.cancel()
+                                self._abort_timer = None
+                        self._timeout_value = None
+                        self._logger.info("Shutdown aborted.")
                 
                 if command == "enable" or command == "disable":
                         self.lastCheckBoxValue = self._automatic_shutdown_enabled
@@ -76,74 +80,77 @@ class AutomaticshutdownPlugin(octoprint.plugin.TemplatePlugin,
                         
                 self._plugin_manager.send_plugin_message(self._identifier, dict(automaticShutdownEnabled=self._automatic_shutdown_enabled, type="timeout", timeout_value=self._timeout_value))
 
-	def on_event(self, event, payload):
-		if event == Events.CLIENT_OPENED:
-			self._plugin_manager.send_plugin_message(self._identifier, dict(automaticShutdownEnabled=self._automatic_shutdown_enabled, type="timeout", timeout_value=self._timeout_value))
-			return
+        def on_event(self, event, payload):
+
+                if event == Events.CLIENT_OPENED:
+                        self._plugin_manager.send_plugin_message(self._identifier, dict(automaticShutdownEnabled=self._automatic_shutdown_enabled, type="timeout", timeout_value=self._timeout_value))
+                        return
                 
-		if event == Events.MOVIE_RENDERING:
-			self._logger.debug("Adding %s to the rendering queue." % payload["movie_basename"])
-			self._renderingQueue.append(payload["movie_basename"])
-			return
-                
-		if event in [Events.MOVIE_DONE, Events.MOVIE_FAILED]:
-			self._logger.debug("Removing %s from the rendering queue." % payload["movie_basename"])
-			try:
-				self._renderingQueue.remove(payload["movie_basename"])
-			except ValueError:
-				pass
-                
-		if not self._automatic_shutdown_enabled:
+                if not self._automatic_shutdown_enabled:
                         return
                 
                 if not self._settings.global_get(["server", "commands", "systemShutdownCommand"]):
                         self._logger.warning("systemShutdownCommand is not defined. Aborting shutdown...")
- 			return
-                
-		if event not in [Events.PRINT_DONE, Events.MOVIE_DONE, Events.MOVIE_FAILED]:
-			return
-
-                if self._printer.is_printing() or self._printer.is_paused():
-                        self._logger.info("Printer is currently printing/paused. No shutdown action will be preformed.")
                         return
 
-                if (len(self._renderingQueue) > 0):
-                        self._logger.info("Waiting for %s timelapse(s) to finish rendering before starting shutdown timer..." % len(self._renderingQueue))
+                if event not in [Events.PRINT_DONE, Events.PRINT_FAILED]:
                         return
 
-		if event in [Events.MOVIE_DONE, Events.MOVIE_FAILED]:
-			self._timer_start()
-			return
+                if event == Events.PRINT_FAILED and not self._printer.is_closed_or_error():
+                        #Cancelled job
+                        return
                 
-		if event == Events.PRINT_DONE:
-			webcam_config = self._settings.global_get(["webcam", "timelapse"], merged=True)
-			timelapse_type = webcam_config["type"]
-			if (timelapse_type is not None and timelapse_type != "off"):
-				return
+                if event in [Events.PRINT_DONE, Events.PRINT_FAILED]:
+                        webcam_config = self._settings.global_get(["webcam", "timelapse"], merged=True)
+                        timelapse_type = webcam_config["type"]
+                        if (timelapse_type is not None and timelapse_type != "off"):
+                                self._wait_for_timelapse_start()
                         else:
-				self._timer_start()
-				return
+                                self._timer_start()
+                        return
 
-	def _timer_start(self):
-		if self._timer is not None:
-			return
-                
+        def _wait_for_timelapse_start(self):
+                if self._wait_for_timelapse_timer is not None:
+                        return
+
+                self._wait_for_timelapse_timer = RepeatedTimer(5, self._wait_for_timelapse)
+                self._wait_for_timelapse_timer.start()
+
+        def _wait_for_timelapse(self):
+                c = len(octoprint.timelapse.get_unrendered_timelapses())
+
+                if c > 0:
+                        self._logger.info("Waiting for %s timelapse(s) to finish rendering before starting shutdown timer..." % c)
+                else:
+                        self._timer_start()
+
+        def _timer_start(self):
+                if self._abort_timer is not None:
+                        return
+
+                if self._wait_for_timelapse_timer is not None:
+                        self._wait_for_timelapse_timer.cancel()
+
                 self._logger.info("Starting abort shutdown timer.")
-		
-		self._timeout_value = self.abortTimeout
-		self._timer = RepeatedTimer(1, self._timer_task)
-		self._timer.start()
+                
+                self._timeout_value = self.abortTimeout
+                self._abort_timer = RepeatedTimer(1, self._timer_task)
+                self._abort_timer.start()
 
-	def _timer_task(self):
-		if self._timeout_value is None:
-			return
+        def _timer_task(self):
+                if self._timeout_value is None:
+                        return
 
-		self._timeout_value -= 1
-		self._plugin_manager.send_plugin_message(self._identifier, dict(automaticShutdownEnabled=self._automatic_shutdown_enabled, type="timeout", timeout_value=self._timeout_value))
-		if self._timeout_value <= 0:
-			self._timer.cancel()
-			self._timer = None
-			self._shutdown_system()
+                self._timeout_value -= 1
+                self._plugin_manager.send_plugin_message(self._identifier, dict(automaticShutdownEnabled=self._automatic_shutdown_enabled, type="timeout", timeout_value=self._timeout_value))
+                if self._timeout_value <= 0:
+                        if self._wait_for_timelapse_timer is not None:
+                                self._wait_for_timelapse_timer.cancel()
+                                self._wait_for_timelapse_timer = None
+                        if self._abort_timer is not None:
+                                self._abort_timer.cancel()
+                                self._abort_timer = None
+                        self._shutdown_system()
 
 	def _shutdown_system(self):
 		shutdown_command = self._settings.global_get(["server", "commands", "systemShutdownCommand"])
