@@ -1,5 +1,4 @@
 <form class="form-horizontal">
-
     <h4>General</h4>
     <div class="control-group">
         <label class="control-label">Abort Timeout</label>
@@ -17,4 +16,19 @@
             </label>
         </div>
     </div>
+    <div class="control-group">
+        <div class="controls">
+            <label class="checkbox">
+            <input type="checkbox" data-bind="checked: settings.plugins.automaticshutdown.enableCustomShutdownCommand"> Use a custom shutdown command.
+            </label>
+        </div>
+    </div>
+    <!-- ko if: settings.plugins.psucontrol.enableCustomCommand() -->
+    <div class="control-group">
+        <label class="control-label">Shutdown Command</label>
+        <div class="controls">
+            <input type="text" class="input-block-level" data-bind="value: settings.plugins.psucontrol.customShutdownCommand">
+        </div>
+    </div>
+    <!-- /ko -->
 </form>

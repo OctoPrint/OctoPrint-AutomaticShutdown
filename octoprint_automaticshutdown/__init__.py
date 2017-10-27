@@ -20,6 +20,8 @@ class AutomaticshutdownPlugin(octoprint.plugin.TemplatePlugin,
         self.abortTimeout = 0
         self.rememberCheckBox = False
         self.lastCheckBoxValue = False
+        self.enableCustomShutdownCommand = False
+        self.customShutdownCommand = ''
         self._automatic_shutdown_enabled = False
         self._timeout_value = None
         self._abort_timer = None
@@ -36,6 +38,12 @@ class AutomaticshutdownPlugin(octoprint.plugin.TemplatePlugin,
         self._logger.debug("lastCheckBoxValue: %s" % self.lastCheckBoxValue)
         if self.rememberCheckBox:
             self._automatic_shutdown_enabled = self.lastCheckBoxValue
+
+        self.enableCustomShutdownCommand = self._settings.get_boolean(["enableCustomShutdownCommand"])
+        self._logger.debug("enableCustomShutdownCommand: %s" % self.enableCustomShutdownCommand)
+
+        self.customShutdownCommand = self._settings.get(["customShutdownCommand"])
+        self._logger.debug("customShutdownCommand: %s" % self.customShutdownCommand)        
 
     def get_assets(self):
         return dict(js=["js/automaticshutdown.js"])
@@ -151,7 +159,11 @@ class AutomaticshutdownPlugin(octoprint.plugin.TemplatePlugin,
             self._shutdown_system()
 
     def _shutdown_system(self):
-        shutdown_command = self._settings.global_get(["server", "commands", "systemShutdownCommand"])
+        if self.enableCustomShutdownCommand:
+            shutdown_command = self.customShutdownCommand
+        else:
+            shutdown_command = self._settings.global_get(["server", "commands", "systemShutdownCommand"])
+            
         self._logger.info("Shutting down system with command: {command}".format(command=shutdown_command))
         try:
             import sarge
@@ -164,7 +176,9 @@ class AutomaticshutdownPlugin(octoprint.plugin.TemplatePlugin,
         return dict(
             abortTimeout = 30,
             rememberCheckBox = False,
-            lastCheckBoxValue = False
+            lastCheckBoxValue = False,
+            enableCustomShutdownCommand = False,
+            customShutdownCommand = ''
         )
 
     def on_settings_save(self, data):
@@ -173,6 +187,8 @@ class AutomaticshutdownPlugin(octoprint.plugin.TemplatePlugin,
         self.abortTimeout = self._settings.get_int(["abortTimeout"])
         self.rememberCheckBox = self._settings.get_boolean(["rememberCheckBox"])
         self.lastCheckBoxValue = self._settings.get_boolean(["lastCheckBoxValue"])
+        self.enableCustomShutdownCommand = self._settings.get_boolean(["enableCustomShutdownCommand"])
+        self.customShutdownCommand = self._settings.get(["customShutdownCommand"])
 
     def get_update_information(self):
         return dict(
