@@ -65,8 +65,10 @@ class AutomaticshutdownPlugin(octoprint.plugin.TemplatePlugin,
 
 		if command == "enable":
 			self._automatic_shutdown_enabled = True
+			self._logger.info("Automatic shutdown enabled")
 		elif command == "disable":
 			self._automatic_shutdown_enabled = False
+			self._logger.info("Automatic shutdown disabled")
 		elif command == "abort":
 			if self._wait_for_timelapse_timer is not None:
 				self._wait_for_timelapse_timer.cancel()
@@ -75,7 +77,7 @@ class AutomaticshutdownPlugin(octoprint.plugin.TemplatePlugin,
 				self._abort_timer.cancel()
 				self._abort_timer = None
 			self._timeout_value = None
-			self._logger.info("Shutdown aborted.")
+			self._logger.info("Shutdown aborted")
 
 		if command == "enable" or command == "disable":
 			self.lastCheckBoxValue = self._automatic_shutdown_enabled
@@ -106,6 +108,8 @@ class AutomaticshutdownPlugin(octoprint.plugin.TemplatePlugin,
 			return
 
 		if event in [Events.PRINT_DONE, Events.PRINT_FAILED]:
+			self._logger.info("Starting abort shutdown timer.")
+
 			webcam_config = self._settings.global_get(["webcam", "timelapse"], merged=True)
 			timelapse_type = webcam_config["type"]
 			if (timelapse_type is not None and timelapse_type != "off"):
@@ -137,8 +141,6 @@ class AutomaticshutdownPlugin(octoprint.plugin.TemplatePlugin,
 		if self._wait_for_timelapse_timer is not None:
 			self._wait_for_timelapse_timer.cancel()
 
-		self._logger.info("Starting abort shutdown timer.")
-
 		self._timeout_value = self.abortTimeout
 		self._abort_timer = RepeatedTimer(1, self._timer_task)
 		self._abort_timer.start()
@@ -149,6 +151,7 @@ class AutomaticshutdownPlugin(octoprint.plugin.TemplatePlugin,
 
 		self._timeout_value -= 1
 		self._plugin_manager.send_plugin_message(self._identifier, dict(automaticShutdownEnabled=self._automatic_shutdown_enabled, type="timeout", timeout_value=self._timeout_value))
+		self._logger.info("Shutting down in {} seconds".format(self._timeout_value))
 		if self._timeout_value <= 0:
 			if self._wait_for_timelapse_timer is not None:
 				self._wait_for_timelapse_timer.cancel()
