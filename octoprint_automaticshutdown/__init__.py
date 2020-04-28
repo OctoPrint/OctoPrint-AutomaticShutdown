@@ -126,6 +126,7 @@ class AutomaticshutdownPlugin(octoprint.plugin.TemplatePlugin,
 
 		if c > 0:
 			self._logger.info("Waiting for %s timelapse(s) to finish rendering before starting shutdown timer..." % c)
+			self._plugin_manager.send_plugin_message(self._identifier, dict(automaticShutdownEnabled=self._automatic_shutdown_enabled, type="timelapse_processing"))
 		else:
 			self._timer_start()
 

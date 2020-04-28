@@ -8,7 +8,8 @@ $(function() {
         // Hack to remove automatically added Cancel button
         // See https://github.com/sciactive/pnotify/issues/141
         PNotify.prototype.options.confirm.buttons = [];
-        self.timeoutPopupText = gettext('Shutting down in ');
+        self.timeoutPopupShutdownText = gettext('Shutting down in ');
+        self.timeoutPopupTimelapseProcessingText = gettext('Waiting for timelapse to finish processing... ');
         self.timeoutPopupOptions = {
             title: gettext('System Shutdown'),
             type: 'notice',
@@ -70,7 +71,7 @@ $(function() {
 
             if (data.type == "timeout") {
                 if ((data.timeout_value != null) && (data.timeout_value > 0)) {
-                    self.timeoutPopupOptions.text = self.timeoutPopupText + data.timeout_value;
+                    self.timeoutPopupOptions.text = self.timeoutPopupShutdownText + data.timeout_value;
                     if (typeof self.timeoutPopup != "undefined") {
                         self.timeoutPopup.update(self.timeoutPopupOptions);
                     } else {
@@ -83,6 +84,15 @@ $(function() {
                         self.timeoutPopup = undefined;
                     }
                 }
+            } else if (data.type == "timelapse_processing") {
+                self.timeoutPopupOptions.text = self.timeoutPopupTimelapseProcessingText;
+                    if (typeof self.timeoutPopup != "undefined") {
+                        self.timeoutPopup.update(self.timeoutPopupOptions);
+                    } else {
+                        self.timeoutPopup = new PNotify(self.timeoutPopupOptions);
+                        self.timeoutPopup.get().on('pnotify.cancel', function() {self.abortShutdown(true);});
+                    }
+
             }
         }
 
