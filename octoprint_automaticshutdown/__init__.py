@@ -16,14 +16,14 @@ class AutomaticshutdownPlugin(octoprint.plugin.TemplatePlugin,
 							  octoprint.plugin.SettingsPlugin,
 							  octoprint.plugin.StartupPlugin):
 
-	def __init__(self):
+        def __init__(self):
                 self.abortTimeout = 0
                 self.rememberCheckBox = False
                 self.lastCheckBoxValue = False
                 self._automatic_shutdown_enabled = False
                 self._timeout_value = None
-		self._abort_timer = None
-		self._wait_for_timelapse_timer = None
+                self._abort_timer = None
+                self._wait_for_timelapse_timer = None
 
         def initialize(self):
                 self.abortTimeout = self._settings.get_int(["abortTimeout"])
@@ -37,23 +37,23 @@ class AutomaticshutdownPlugin(octoprint.plugin.TemplatePlugin,
                 if self.rememberCheckBox:
                         self._automatic_shutdown_enabled = self.lastCheckBoxValue
                 
-	def get_assets(self):
-		return dict(js=["js/automaticshutdown.js"])
+        def get_assets(self):
+                return dict(js=["js/automaticshutdown.js"])
 
-	def get_template_configs(self):
-		return [dict(type="sidebar",
-			name="Automatic Shutdown",
-			custom_bindings=False,
-			icon="power-off"),
+        def get_template_configs(self):
+                return [dict(type="sidebar",
+                        name="Automatic Shutdown",
+                        custom_bindings=False,
+                        icon="power-off"),
                         dict(type="settings", custom_bindings=False)]
             
 
-	def get_api_commands(self):
-		return dict(enable=[],
-			disable=[],
-			abort=[])
+        def get_api_commands(self):
+                return dict(enable=[],
+                        disable=[],
+                        abort=[])
 
-	def on_api_command(self, command, data):
+        def on_api_command(self, command, data):
                 if not user_permission.can():
                         return make_response("Insufficient rights", 403)
 
@@ -152,15 +152,15 @@ class AutomaticshutdownPlugin(octoprint.plugin.TemplatePlugin,
                                 self._abort_timer = None
                         self._shutdown_system()
 
-	def _shutdown_system(self):
-		shutdown_command = self._settings.global_get(["server", "commands", "systemShutdownCommand"])
-		self._logger.info("Shutting down system with command: {command}".format(command=shutdown_command))
-		try:
-			import sarge
-			p = sarge.run(shutdown_command, async=True)
-		except Exception as e:
-			self._logger.exception("Error when shutting down: {error}".format(error=e))
-			return
+        def _shutdown_system(self):
+                shutdown_command = self._settings.global_get(["server", "commands", "systemShutdownCommand"])
+                self._logger.info("Shutting down system with command: {command}".format(command=shutdown_command))
+                try:
+                        import sarge
+                        p = sarge.run(shutdown_command, async=True)
+                except Exception as e:
+                        self._logger.exception("Error when shutting down: {error}".format(error=e))
+                        return
 
         def get_settings_defaults(self):
                 return dict(
