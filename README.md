@@ -18,3 +18,6 @@ or manually using this URL:
 In order for the plugin work, the systemShutdownCommand must be set within the settings.
 
 This setting can be edited in OctoPrint "Settings/Server/Shutdown system".
+
+## Known issues
+something about the Enclosure Plugin seems to break this plugin.
