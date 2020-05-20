@@ -157,8 +157,8 @@ class AutomaticshutdownPlugin(octoprint.plugin.TemplatePlugin,
                 self._logger.info("Shutting down system with command: {command}".format(command=shutdown_command))
                 try:
                         import sarge
-                        p = sarge.run(shutdown_command, non_blocking=True)
-                        #p = sarge.run(shutdown_command, async=True)
+                        #p = sarge.run(shutdown_command, non_blocking=True)
+                        p = sarge.run(shutdown_command, async_=True)
                 except Exception as e:
                         self._logger.exception("Error when shutting down: {error}".format(error=e))
                         return
