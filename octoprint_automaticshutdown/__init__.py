@@ -152,28 +152,15 @@ class AutomaticshutdownPlugin(octoprint.plugin.TemplatePlugin,
                                 self._abort_timer = None
                         self._shutdown_system()
 
-<<<<<<< HEAD
         def _shutdown_system(self):
                 shutdown_command = self._settings.global_get(["server", "commands", "systemShutdownCommand"])
                 self._logger.info("Shutting down system with command: {command}".format(command=shutdown_command))
                 try:
                         import sarge
-                        #p = sarge.run(shutdown_command, non_blocking=True)
                         p = sarge.run(shutdown_command, async_=True)
                 except Exception as e:
                         self._logger.exception("Error when shutting down: {error}".format(error=e))
                         return
-=======
-	def _shutdown_system(self):
-		shutdown_command = self._settings.global_get(["server", "commands", "systemShutdownCommand"])
-		self._logger.info("Shutting down system with command: {command}".format(command=shutdown_command))
-		try:
-			import sarge
-			p = sarge.run(shutdown_command, async=True)
-		except Exception as e:
-			self._logger.exception("Error when shutting down: {error}".format(error=e))
-			return
->>>>>>> parent of 09b450d... Update __init__.py
 
         def get_settings_defaults(self):
                 return dict(
