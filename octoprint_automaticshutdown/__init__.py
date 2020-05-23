@@ -152,6 +152,7 @@ class AutomaticshutdownPlugin(octoprint.plugin.TemplatePlugin,
                                 self._abort_timer = None
                         self._shutdown_system()
 
+<<<<<<< HEAD
         def _shutdown_system(self):
                 shutdown_command = self._settings.global_get(["server", "commands", "systemShutdownCommand"])
                 self._logger.info("Shutting down system with command: {command}".format(command=shutdown_command))
