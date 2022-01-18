@@ -166,7 +166,7 @@ class AutomaticshutdownPlugin(octoprint.plugin.TemplatePlugin,
 		self._logger.info("Shutting down system with command: {command}".format(command=shutdown_command))
 		try:
 			import sarge
-			p = sarge.run(shutdown_command, async=True)
+			p = sarge.run(shutdown_command, async_=True)
 		except Exception as e:
 			self._logger.exception("Error when shutting down: {error}".format(error=e))
 			return
@@ -203,6 +203,7 @@ class AutomaticshutdownPlugin(octoprint.plugin.TemplatePlugin,
 		)
 
 __plugin_name__ = "Automatic Shutdown"
+__plugin_pythoncompat__ = ">=2.7,<4"
 
 def __plugin_load__():
 	global __plugin_implementation__
